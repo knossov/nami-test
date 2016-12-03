@@ -1,6 +1,6 @@
 # nami-test
 
-*Автор:* Konstantin Nosov
+*Автор:* Константин Носов
 
 *email:*  knst.nossov@gmail.com
 
