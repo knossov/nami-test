@@ -1,10 +1,10 @@
 # nami-test
 
-*Author:* Konstantin Nosov
+*Автор:* Konstantin Nosov
 
 *email:*  knst.nossov@gmail.com
 
-## Task
+## Постановка здачи
 
 * Для любого микроконтроллера, с которым у вас был опыт работы, разработать ПО которое должно выполнять следующие функции:
   * Опрос АЦП с частотой 1 Герц. Сохранение значения в отдельную переменную. Работа с DMA приветствуется.  (Автоматическая запись полученного значения непосредственно в память может у различных контроллеров называться по-другому).
@@ -20,9 +20,12 @@
 * Проект должен дополнительно содержать файл с описанием использованной IDE, компилятора, логи компиляции, файл линковщика и hex (.bin) файл.
 * Срок выполнения задания 3 дня с момента получения.
 
+## омментарии
+
+* Передупреждения в логе компиляции относятся к коду сторонних библиотек.
 
 
-## Used tools : 
+## Использованные инструменты: 
 
 * Milandr Software pack for Keil MDK 5 v1.4.1
 * µVision V5.22.0.0
@@ -46,11 +49,11 @@ Target DLL:         UL2CM3.DLL           V1.159.0.0
 Dialog DLL:         TCM.DLL              V1.21.0.0
 ```
 
-## Repository structure 
-* [/src](/src) - project source
-* [/bin](/bin) - compilation output and artefacts
-  * [bin/nami_test.build_log.htm](bin/nami_test.build_log.htm)   - build log
+## Структура репозитария 
+* [/src](/src) - исходный код
+* [/bin](/bin) - логи компиляции и артефакты
+  * [bin/nami_test.build_log.htm](bin/nami_test.build_log.htm)   - лог компиляции
   * [bin/nami_test.axf](bin/nami_test.axf) - axf
   * [bin/nami_test.hex](bin/nami_test.hex) - hex
-* [/toos](/toos) - tools
+* [/toos](/toos) - инструменты
   * [/tools/mdr_spl_v1.4.1.pack](/tools/mdr_spl_v1.4.1.pack) Milandr Software pack for Keil MDK 5 v1.4.1
