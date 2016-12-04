@@ -14,7 +14,6 @@
 #include "MDR32F9Qx_bkp.h"
 #include "MDR32F9Qx_adc.h"
 #include "MDR32F9Qx_timer.h"
-#include "port.h"
 
 
 static RST_CLK_FreqTypeDef RCC_ClocksStatus;
