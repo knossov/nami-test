@@ -22,7 +22,8 @@
 
 ##  омментарии
 
-* —борка осуществл€етс€ дл€ микроконтроллера MDR1986BE92
+* —борка осуществл€етс€ дл€ микроконтроллера MDR1986BE92 (ближайший аналог STM32F103x)
+* ќтладочна€ плата LDM-HELPER-K1986BE92QI
 * ѕередупреждени€ в логе компил€ции относ€тс€ к коду сторонних библиотек.
 
 
@@ -53,8 +54,8 @@ Dialog DLL:         TCM.DLL              V1.21.0.0
 ## —труктура репозитари€ 
 * [/src](/src) - исходный код
 * [/bin](/bin) - логи компил€ции и артефакты
-  * [bin/nami_test.build_log.htm](bin/nami_test.build_log.htm)   - лог компил€ции
-  * [bin/nami_test.axf](bin/nami_test.axf) - axf
-  * [bin/nami_test.hex](bin/nami_test.hex) - hex
+  * [bin/TestNami.build_log.htm](bin/TestNami.build_log.htm)   - лог компил€ции
+  * [bin/TestNami.axf](bin/TestNami.axf) - axf
+  * [bin/TestNami.hex](bin/TestNami.hex) - hex
 * [/toos](/toos) - инструменты
   * [/tools/mdr_spl_v1.4.1.pack](/tools/mdr_spl_v1.4.1.pack) Milandr Software pack for Keil MDK 5 v1.4.1
