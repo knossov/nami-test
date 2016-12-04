@@ -1,26 +1,9 @@
-/**
-  ******************************************************************************
-  * @file    Main.c
-  * @author  Phyton Application Team
-  * @version V3.0.0
-  * @date    10.09.2011
-  * @brief   Main program body
-  ******************************************************************************
-  * <br><br>
-  * THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
-  * WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE
-  * TIME. AS A RESULT, PHYTON SHALL NOT BE HELD LIABLE FOR ANY
-  * DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY CLAIMS ARISING
-  * FROM THE CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE
-  * CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
-  *
-  * <h2><center>&copy; COPYRIGHT 2011 Phyton</center></h2>
-  */
+
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdio.h>
-#include <math.h>
-#include <string.h>
+//#include <math.h>
+//#include <string.h>
 #include "types.h"
 #include "MDR32F9Qx_config.h"
 #include "MDR32Fx.h"
@@ -38,7 +21,7 @@
 #include "port.h"
 //#include "..\jdt_1800\disp.h"
 //#include "..\jdt_1800\jdt1800_drv.h"
-#include "ComDef.h"
+//#include "ComDef.h"
 
 
 static RST_CLK_FreqTypeDef RCC_ClocksStatus;	
@@ -47,37 +30,13 @@ static SSP_InitTypeDef sSSP;
 static uint32_t CPUclk;
 static uint32_t ADCdata __attribute__((at(0x2000FFFC))); 
 
-//uint32_t InpStatus;
 static uint32_t CntMs;
-//extern float FlashFreqMHz;
+static uint32_t Cnt1;//
 
-uint16_t ComReg =PEN;
-uint32_t trim, trim1;
-//uint32_t d_eeprom=0;
-
-//extern USHORT usRegInputBuf[];
-//extern USHORT usRegHoldingBuf[];
-//extern unsigned char ucRegDiscretesBuf[];
-//extern unsigned char ucRegCoilsBuf[];
-
-
-uint32_t Cnt1,Cnt2;//
-
-//static uint16_t i,k,n;
-
-
-uint32_t mbBaudrate,rs485Baudrate;
-uint8_t mbAddress, rs485Address;
-
-//extern uint16_t STPcnt;
-
-//uint16_t position;
+//uint32_t mbBaudrate,rs485Baudrate;
+//uint8_t mbAddress, rs485Address;
 
 extern void ProgramDelay_us(uint32_t Loops); 
-//extern void  Init_SPI1(void);
-//extern void StepTimerInit( uint16_t  );
-//extern void StepTimerEnable( void );
-//extern void StepTimerClose(void);
 
 typedef  struct PortOut_t {
 	uint16_t b0:1;
@@ -100,57 +59,38 @@ typedef  struct PortOut_t {
 #define PortPins (*((volatile PortOut*)MDR_PORTA))
 #define nCS (*((volatile PortOut*)MDR_PORTC))	
 
-#define	LED0		PORT_Pin_2
-#define	START 	0x01
-#define	MOV 		0x02
-#define	RESET 	0x08
-
-#define	BUSY 		0x01			
-#define	FAULT 	0x02	
-
-#define	nRST		 	PORT_Pin_2//0x04	
-#define	nEN		 		PORT_Pin_4//0x40		
-#define	nSLP		 	PORT_Pin_5//	0x20	
-#define	nFLT		 	0x08	
-
 // debug printf ////////////////////////////////////////////////////////
-#define ITM_Port8(n)    (*((volatile unsigned char *)(0xE0000000+4*n)))
-#define ITM_Port16(n)   (*((volatile unsigned short*)(0xE0000000+4*n)))
-#define ITM_Port32(n)   (*((volatile unsigned long *)(0xE0000000+4*n)))
+//#define ITM_Port8(n)    (*((volatile unsigned char *)(0xE0000000+4*n)))
+//#define ITM_Port16(n)   (*((volatile unsigned short*)(0xE0000000+4*n)))
+//#define ITM_Port32(n)   (*((volatile unsigned long *)(0xE0000000+4*n)))
 
-#define DEMCR           (*((volatile unsigned long *)(0xE000EDFC)))
-#define TRCENA          0x01000000
+//#define DEMCR           (*((volatile unsigned long *)(0xE000EDFC)))
+//#define TRCENA          0x01000000
 
-struct __FILE { int handle; /* Add whatever needed */ };
-FILE __stdout;
-FILE __stdin;
+//struct __FILE { int handle; /* Add whatever needed */ };
+//FILE __stdout;
+//FILE __stdin;
 
-int fputc(int ch, FILE *f) {
-  if (DEMCR & TRCENA) {
-    while (ITM_Port32(0) == 0);
-    ITM_Port8(0) = ch;
-  }
-  return(ch);
-}
+//int fputc(int ch, FILE *f) {
+//  if (DEMCR & TRCENA) {
+//    while (ITM_Port32(0) == 0);
+//    ITM_Port8(0) = ch;
+//  }
+//  return(ch);
+//}
 // debug printf ////////////////////////////////////////////////////////
 
-/** @addtogroup __MDR32F9Qx_Eval_Demo MDR32F9Qx Demonstration Example
-  * @{
-  */
+#define DELAY_LOOP_CYCLES               (9UL)
+#define LOOP_US 												(FLASH_PROG_FREQ_MHZ / DELAY_LOOP_CYCLES)
+#define GET_US_LOOPS(N)                 ((uint32_t)((float)(N) * LOOP_US))
 
-/** @addtogroup Main Main
-  * @{
-  */
-
-/** @defgroup Main_Functions Main Functions
-  * @{
-  */
-//eMBErrorCode  eStatus;
 static PORT_InitTypeDef PORT_InitStructure;
-//static UART_InitTypeDef UART_InitStructure;
+static UART_InitTypeDef UART_InitStructure;
 
 void InitBoard (void)
 {
+	// set 48MGz CPU's clock
+	
 	POWER_DUccMode	(POWER_DUcc_upto_40MHz);	//	
 	RST_CLK_HSEconfig(RST_CLK_HSE_ON);
 	MDR_BKP->REG_0F &= ~(0x1FUL<<16);
@@ -226,13 +166,14 @@ void InitBoard (void)
 	
 }	
 
-
-
-
-
 //void TimersInit( uint32_t F1, uint32_t F2, uint32_t F3)
 void TimersInit(void)
 {
+	// configure  
+	// tM1 for 100Gz period interrupt
+	// tM2 for 300Gz period interrupt
+	// tM3 for 500000Gz period interrupt
+	
 	TIMER_CntInitTypeDef sTIM_CntInit;
 
 	RST_CLK_PCLKcmd( RST_CLK_PCLK_TIMER1 ,ENABLE);
@@ -288,6 +229,7 @@ void TimersInit(void)
 
 void Timer1_IRQHandler(void)
 {
+//change state of port's pin	
 MDR_TIMER1->STATUS &= ~TIMER_STATUS_CNT_ARR;	
 PortPins.b2 ^=1;
 
@@ -295,26 +237,30 @@ PortPins.b2 ^=1;
 
 void Timer2_IRQHandler(void)
 {
+//change state of port's pin		
 MDR_TIMER2->STATUS &= ~TIMER_STATUS_CNT_ARR;	
 PortPins.b5 ^=1;
 }
 
 void Timer3_IRQHandler(void)
 {
+//change state of port's pin		
 MDR_TIMER3->STATUS &= ~TIMER_STATUS_CNT_ARR;	
 PortPins.b4 ^=1;
 }
 
 void InitSPI1(void)
 {
+	// configure SPI1: 2MGz, 16bits, Motorola packet
+	
   /* Enable peripheral clocks --------------------------------------------------*/
-  RST_CLK_PCLKcmd((RST_CLK_PCLK_RST_CLK | RST_CLK_PCLK_SSP1 | RST_CLK_PCLK_DMA),ENABLE);
+  RST_CLK_PCLKcmd((RST_CLK_PCLK_RST_CLK | RST_CLK_PCLK_SSP1 ),ENABLE);
   RST_CLK_PCLKcmd((RST_CLK_PCLK_PORTF), ENABLE);
 	RST_CLK_PCLKcmd((RST_CLK_PCLK_PORTC), ENABLE);
 	
 	/* Reset all SSP settings */
   SSP_DeInit(MDR_SSP1);
-  SSP_BRGInit(MDR_SSP1,SSP_HCLKdiv2);
+  SSP_BRGInit(MDR_SSP1,SSP_HCLKdiv2);	// 48/2 = 24MGz
 
   /* Reset PORTF settings */
 	PORT_DeInit(MDR_PORTF);
@@ -348,7 +294,7 @@ void InitSPI1(void)
   SSP_StructInit (&sSSP);
 
   sSSP.SSP_SCR  = 0;
-  sSSP.SSP_CPSDVSR = 12;//48;//120;//4*8; 
+  sSSP.SSP_CPSDVSR = 12; // 24/12 = 2MGz
   sSSP.SSP_Mode = SSP_ModeMaster;
 	//sSSP.SSP_SPH = SSP_SPH_1Edge; 
 	//sSSP.SSP_SPO = SSP_SPO_High;
@@ -364,6 +310,9 @@ void InitSPI1(void)
 
 void SysTick_Handler(void)
 {
+// send ADC reading to two SPI devices	
+// update ADC reading every 1 sec	
+	
 SysTick->CTRL &= ~SysTick_CTRL_COUNTFLAG_Msk;	
 CntMs++;	
 nCS.b0=0; // enable device0	
@@ -381,7 +330,7 @@ if ((CntMs%10)==0) // 1 sec
 		MDR_ADC->ADC1_CFG |= ADC1_CFG_REG_GO;}
 }	
 
-void ADC_Config(void)
+void ADC_Config(void)  	// Configure PORTD.2 as ADC input
 {
 	/* ADC Init structures */
 	ADC_InitTypeDef  ADC_InitStructure;
@@ -418,16 +367,99 @@ void ADC_Config(void)
   ADCx_InitStructure.ADC_DelayGo          = 0x7;
   ADC1_Init (&ADCx_InitStructure);
 	
-	
 }
+
+uint32_t UARTx_Set_BaudRate( MDR_UART_TypeDef* UARTx)  	// set baudrate for specified UART
+{
+	uint32_t cpuclock;
+	uint32_t realspeed, speederror;
+	uint32_t divider;
+	uint32_t integerdivider;
+	uint32_t fractionaldivider;
+	RST_CLK_FreqTypeDef RST_CLK_Clocks;	
 	
-/*******************************************************************************
-* Function Name  : main
-* Description    : Main program.
-* Input          : None
-* Output         : None
-* Return         : None
-*******************************************************************************/
+	//static UART_InitTypeDef UART_InitStructure;
+	RST_CLK_GetClocksFreq(&RST_CLK_Clocks);
+	cpuclock = RST_CLK_Clocks.CPU_CLK_Frequency;	
+	
+	/* Determine the integer part */
+	divider = (8*cpuclock)/ (UART_InitStructure.UART_BaudRate);
+	divider = (divider+1)>>1;
+	integerdivider = divider >> 6;
+	/* Determine the fractional part */
+	fractionaldivider = (divider & 0x3F);
+	/* Determine the speed error */
+	realspeed = (4*cpuclock ) / ((integerdivider * 64) + fractionaldivider);
+	speederror = ((realspeed - UART_InitStructure.UART_BaudRate) * 128)
+								/ UART_InitStructure.UART_BaudRate;
+	/* Write UART Baud Rate */
+	UARTx->IBRD = integerdivider;
+	UARTx->FBRD = fractionaldivider;	
+	return 	speederror;
+}
+
+
+void
+UartInit(  uint32_t ulBaudRate )
+{
+	// configure UART: 115200baud, 8bits
+	/* Enables the clock on PORTB */
+	RST_CLK_PCLKcmd(RST_CLK_PCLK_PORTD, ENABLE);	
+	
+  /* Fill PortInit structure */
+  PORT_InitStructure.PORT_PULL_UP = PORT_PULL_UP_OFF;	//PORT_PULL_UP_ON;
+  PORT_InitStructure.PORT_PULL_DOWN = PORT_PULL_DOWN_OFF;
+  PORT_InitStructure.PORT_PD_SHM = PORT_PD_SHM_OFF;
+  PORT_InitStructure.PORT_PD = PORT_PD_DRIVER;	
+  PORT_InitStructure.PORT_GFEN = PORT_GFEN_OFF;
+  PORT_InitStructure.PORT_FUNC = PORT_FUNC_ALTER;
+  PORT_InitStructure.PORT_SPEED = PORT_SPEED_FAST;	//PORT_SPEED_MAXFAST;
+  PORT_InitStructure.PORT_MODE = PORT_MODE_DIGITAL;
+
+  /* Configure PORTD pins 1 (UART2_TX) as output */
+  PORT_InitStructure.PORT_OE = PORT_OE_OUT;
+  PORT_InitStructure.PORT_Pin = PORT_Pin_1;
+  PORT_Init(MDR_PORTD, &PORT_InitStructure);
+
+  /* Configure PORTD pins 0 (UART2_RX) as input */
+  PORT_InitStructure.PORT_OE = PORT_OE_IN;
+  PORT_InitStructure.PORT_Pin = PORT_Pin_0;
+  PORT_Init(MDR_PORTD, &PORT_InitStructure);	
+	
+  /* Enables the CPU_CLK clock on UART1 */
+  RST_CLK_PCLKcmd(RST_CLK_PCLK_UART2, ENABLE);
+
+  /* Set the HCLK division factor = 1 for UART1,UART2 */
+  UART_BRGInit(MDR_UART2, UART_HCLKdiv1);
+	
+	UART_DeInit(MDR_UART2);
+	UART_StructInit(&UART_InitStructure);
+
+  /* Initialize UART_InitStructure */
+  UART_InitStructure.UART_BaudRate                = (uint32_t)ulBaudRate; // 115200;
+  UART_InitStructure.UART_WordLength              = UART_WordLength8b;
+  UART_InitStructure.UART_StopBits                = UART_StopBits1;
+  UART_InitStructure.UART_Parity                  = UART_Parity_No;
+  UART_InitStructure.UART_FIFOMode                = UART_FIFO_OFF;
+  UART_InitStructure.UART_HardwareFlowControl     = UART_HardwareFlowControl_RXE | UART_HardwareFlowControl_TXE;
+
+  /* Configure UART1 parameters */
+  UART_Init (MDR_UART2,&UART_InitStructure);
+	UARTx_Set_BaudRate(MDR_UART2);  
+	
+  /* Enable transmitter interrupt (UARTTXINTR) */
+  //UART_ITConfig (MDR_UART1, UART_IT_TX | UART_IT_RX, ENABLE);
+  //NVIC_SetPriority (UART2_IRQn, 1);//2);
+  //NVIC_EnableIRQ(UART2_IRQn); // 
+  /* Enables UART2 peripheral */
+  UART_Cmd(MDR_UART2,ENABLE);	
+}
+
+
+
+
+
+
 #ifdef __CC_ARM 
 int main(void)
 #else
@@ -462,6 +494,7 @@ void main(void)
 	ADCdata = MDR_ADC->ADC1_RESULT & 0xFFF;
 
 	InitSPI1();
+	UartInit(115200);
 	
 	NVIC_SetPriority (SysTick_IRQn, 3);	// set  priority 
 	RST_CLK_GetClocksFreq(&RCC_ClocksStatus);
@@ -473,7 +506,11 @@ void main(void)
 	TimersInit();	
 	
 	while(1)
-	{__NOP();}
+	{
+	//__NOP();
+	while(MDR_UART2->FR	& UART_FLAG_RXFE); // wait till RX buffer is not empty
+  MDR_UART2->DR = (MDR_UART2->DR & (uint16_t)0x00FF); // send the received byte
+	}
 		
 }
 
@@ -516,13 +553,5 @@ void assert_failed(uint32_t file_id, uint32_t line, const uint8_t* expr)
 }
 #endif /* USE_ASSERT_INFO */
 
-/** @} */ /* End of group Main_Functions */
-
-/** @} */ /* End of group Main */
-
-/** @} */ /* End of group __MDR32F9Qx_Eval_Demo */
-
-/******************* (C) COPYRIGHT 2011 Phyton *********************************
-*
-* END OF FILE Main.c */
+/* END OF FILE Main.c */
 
