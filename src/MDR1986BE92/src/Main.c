@@ -2,8 +2,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdio.h>
-//#include <math.h>
-//#include <string.h>
 #include "types.h"
 #include "MDR32F9Qx_config.h"
 #include "MDR32Fx.h"
@@ -15,13 +13,8 @@
 #include "MDR32F9Qx_power.h"
 #include "MDR32F9Qx_bkp.h"
 #include "MDR32F9Qx_adc.h"
-//#include "MDR32F9Qx_iwdg.h"
 #include "MDR32F9Qx_timer.h"
-//#include "..\modbus\mb.h"
 #include "port.h"
-//#include "..\jdt_1800\disp.h"
-//#include "..\jdt_1800\jdt1800_drv.h"
-//#include "ComDef.h"
 
 
 static RST_CLK_FreqTypeDef RCC_ClocksStatus;	
@@ -32,9 +25,6 @@ static uint32_t ADCdata __attribute__((at(0x2000FFFC)));
 
 static uint32_t CntMs;
 static uint32_t Cnt1;//
-
-//uint32_t mbBaudrate,rs485Baudrate;
-//uint8_t mbAddress, rs485Address;
 
 extern void ProgramDelay_us(uint32_t Loops); 
 
@@ -58,27 +48,6 @@ typedef  struct PortOut_t {
 } PortOut;
 #define PortPins (*((volatile PortOut*)MDR_PORTA))
 #define nCS (*((volatile PortOut*)MDR_PORTC))	
-
-// debug printf ////////////////////////////////////////////////////////
-//#define ITM_Port8(n)    (*((volatile unsigned char *)(0xE0000000+4*n)))
-//#define ITM_Port16(n)   (*((volatile unsigned short*)(0xE0000000+4*n)))
-//#define ITM_Port32(n)   (*((volatile unsigned long *)(0xE0000000+4*n)))
-
-//#define DEMCR           (*((volatile unsigned long *)(0xE000EDFC)))
-//#define TRCENA          0x01000000
-
-//struct __FILE { int handle; /* Add whatever needed */ };
-//FILE __stdout;
-//FILE __stdin;
-
-//int fputc(int ch, FILE *f) {
-//  if (DEMCR & TRCENA) {
-//    while (ITM_Port32(0) == 0);
-//    ITM_Port8(0) = ch;
-//  }
-//  return(ch);
-//}
-// debug printf ////////////////////////////////////////////////////////
 
 #define DELAY_LOOP_CYCLES               (9UL)
 #define LOOP_US 												(FLASH_PROG_FREQ_MHZ / DELAY_LOOP_CYCLES)
@@ -105,12 +74,9 @@ void InitBoard (void)
   EEPROM_SetLatency ( EEPROM_Latency_1);				// set Delay EEPROM [2:0] = 001;			
     /* Select HSE clock as CPU_PLL input clock source */
     /* Set PLL multiplier to 3                        */
-    //RST_CLK_CPU_PLLconfig(RST_CLK_CPU_PLLsrcHSEdiv1, RST_CLK_CPU_PLLmul3);	// HSE * 3
 		RST_CLK_CPU_PLLconfig(RST_CLK_CPU_PLLsrcHSEdiv2, RST_CLK_CPU_PLLmul6);	// (HSE/2) * 6	
     /* Enable CPU_PLL */
     RST_CLK_CPU_PLLcmd(ENABLE);
-		//Cnt1 = 200; // about 200us	for 24MHz 
-		//for (;Cnt1>0;Cnt1--) {}			
 		ProgramDelay_us(GET_US_LOOPS(200) );	/* Wait for 200 us */
 		if (RST_CLK_CPU_PLLstatus() == SUCCESS)				
 			{
@@ -166,7 +132,6 @@ void InitBoard (void)
 	
 }	
 
-//void TimersInit( uint32_t F1, uint32_t F2, uint32_t F3)
 void TimersInit(void)
 {
 	// configure  
@@ -296,16 +261,10 @@ void InitSPI1(void)
   sSSP.SSP_SCR  = 0;
   sSSP.SSP_CPSDVSR = 12; // 24/12 = 2MGz
   sSSP.SSP_Mode = SSP_ModeMaster;
-	//sSSP.SSP_SPH = SSP_SPH_1Edge; 
-	//sSSP.SSP_SPO = SSP_SPO_High;
   sSSP.SSP_WordLength = SSP_WordLength16b;
   sSSP.SSP_FRF = SSP_FRF_SPI_Motorola;//SSP_FRF_SSI_TI;//
-  sSSP.SSP_HardwareFlowControl = //SSP_HardwareFlowControl_None;
-																SSP_HardwareFlowControl_SSE;	//Enable
-																//SSP_HardwareFlowControl_LBM; TX -> RX
+  sSSP.SSP_HardwareFlowControl = SSP_HardwareFlowControl_SSE;	//Enable
   SSP_Init (MDR_SSP1,&sSSP);
-	//MDR_SSP1-> CR0 |= 1<<6; // SPO
-	//MDR_SSP1-> CR0 |= 1<<7; // SPH	
 }
 
 void SysTick_Handler(void)
@@ -317,7 +276,6 @@ SysTick->CTRL &= ~SysTick_CTRL_COUNTFLAG_Msk;
 CntMs++;	
 nCS.b0=0; // enable device0	
 MDR_SSP1->DR = (uint16_t) ADCdata;
-//while((SSP_GetFlagStatus(MDR_SSP1, SSP_FLAG_BSY))) {}; 	// wait till Tx is empty	
 while (MDR_SSP1->SR & SSP_FLAG_BSY);	
 nCS.b0=1; // disable device0	
 nCS.b1=0; // enable device1		
@@ -358,12 +316,12 @@ void ADC_Config(void)  	// Configure PORTD.2 as ADC input
   ADC_InitStructure.ADC_TempSensor           = ADC_TEMP_SENSOR_Enable;
   ADC_Init (&ADC_InitStructure);
 	
-	ADCx_StructInit(&ADCx_InitStructure);	   ////////////////////
-	ADCx_InitStructure.ADC_ClockSource			= ADC_CLOCK_SOURCE_CPU; // ADC_CLOCK_SOURCE_ADC
-  ADCx_InitStructure.ADC_SamplingMode     = ADC_SAMPLING_MODE_SINGLE_CONV; //ADC_SAMPLING_MODE_CICLIC_CONV; 
+	ADCx_StructInit(&ADCx_InitStructure);	   
+	ADCx_InitStructure.ADC_ClockSource			= ADC_CLOCK_SOURCE_CPU; 
+  ADCx_InitStructure.ADC_SamplingMode     = ADC_SAMPLING_MODE_SINGLE_CONV;  
   ADCx_InitStructure.ADC_ChannelNumber    = ADC_CH_ADC2;
   ADCx_InitStructure.ADC_IntVRefSource    = ADC_INT_VREF_SOURCE_EXACT;
-  ADCx_InitStructure.ADC_Prescaler        = ADC_CLK_div_128; //ADC_CLK_div_32768;
+  ADCx_InitStructure.ADC_Prescaler        = ADC_CLK_div_128; 
   ADCx_InitStructure.ADC_DelayGo          = 0x7;
   ADC1_Init (&ADCx_InitStructure);
 	
@@ -413,7 +371,7 @@ UartInit(  uint32_t ulBaudRate )
   PORT_InitStructure.PORT_PD = PORT_PD_DRIVER;	
   PORT_InitStructure.PORT_GFEN = PORT_GFEN_OFF;
   PORT_InitStructure.PORT_FUNC = PORT_FUNC_ALTER;
-  PORT_InitStructure.PORT_SPEED = PORT_SPEED_FAST;	//PORT_SPEED_MAXFAST;
+  PORT_InitStructure.PORT_SPEED = PORT_SPEED_FAST;	
   PORT_InitStructure.PORT_MODE = PORT_MODE_DIGITAL;
 
   /* Configure PORTD pins 1 (UART2_TX) as output */
@@ -436,7 +394,7 @@ UartInit(  uint32_t ulBaudRate )
 	UART_StructInit(&UART_InitStructure);
 
   /* Initialize UART_InitStructure */
-  UART_InitStructure.UART_BaudRate                = (uint32_t)ulBaudRate; // 115200;
+  UART_InitStructure.UART_BaudRate                = (uint32_t)ulBaudRate; 
   UART_InitStructure.UART_WordLength              = UART_WordLength8b;
   UART_InitStructure.UART_StopBits                = UART_StopBits1;
   UART_InitStructure.UART_Parity                  = UART_Parity_No;
@@ -448,10 +406,6 @@ UartInit(  uint32_t ulBaudRate )
 	UARTx_Set_BaudRate(MDR_UART2);  
 	
   /* Enable transmitter interrupt (UARTTXINTR) */
-  //UART_ITConfig (MDR_UART1, UART_IT_TX | UART_IT_RX, ENABLE);
-  //NVIC_SetPriority (UART2_IRQn, 1);//2);
-  //NVIC_EnableIRQ(UART2_IRQn); // 
-  /* Enables UART2 peripheral */
   UART_Cmd(MDR_UART2,ENABLE);	
 }
 
@@ -474,7 +428,7 @@ void main(void)
   PORT_InitStructure.PORT_OE    = PORT_OE_OUT;  
 	PORT_InitStructure.PORT_FUNC  = PORT_FUNC_PORT;  // 
   PORT_InitStructure.PORT_MODE  = PORT_MODE_DIGITAL;
-  PORT_InitStructure.PORT_SPEED = PORT_SPEED_FAST;//PORT_SPEED_MAXFAST;
+  PORT_InitStructure.PORT_SPEED = PORT_SPEED_FAST;
   PORT_Init(MDR_PORTA, &PORT_InitStructure);	
 	
 	PORT_StructInit(&PORT_InitStructure);	
@@ -483,7 +437,7 @@ void main(void)
   PORT_InitStructure.PORT_OE    = PORT_OE_OUT;  
 	PORT_InitStructure.PORT_FUNC  = PORT_FUNC_PORT;  // 
   PORT_InitStructure.PORT_MODE  = PORT_MODE_DIGITAL;
-  PORT_InitStructure.PORT_SPEED = PORT_SPEED_FAST;//PORT_SPEED_MAXFAST;
+  PORT_InitStructure.PORT_SPEED = PORT_SPEED_FAST;
   PORT_Init(MDR_PORTB, &PORT_InitStructure);		
 	
 
@@ -507,7 +461,6 @@ void main(void)
 	
 	while(1)
 	{
-	//__NOP();
 	while(MDR_UART2->FR	& UART_FLAG_RXFE); // wait till RX buffer is not empty
   MDR_UART2->DR = (MDR_UART2->DR & (uint16_t)0x00FF); // send the received byte
 	}
